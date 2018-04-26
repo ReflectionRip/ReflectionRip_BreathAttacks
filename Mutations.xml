@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mutations>
   <category Name="Physical">
-    <mutation Name="Fire Breath" Cost="4" MaxSelected="1" Class="FireBreath" Exclusions="" Code="r1"></mutation>
+    <mutation Name="Fire Breath" Cost="4" MaxSelected="1" Class="rr_FireBreath" Exclusions="" Code="r1"></mutation>
+    <mutation Name="Ice Breath" Cost="4" MaxSelected="1" Class="rr_IceBreath" Exclusions="" Code="r2"></mutation>
   </category>
 </mutations>

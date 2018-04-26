@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<objects>
+  <object Name="Smokey Breath" Inherits="Armor">
+    <part Name="NoDamage"></part>
+    <part Name="Armor" AV="0" DV="0" RF="0" WornOn="Face"></part>
+    <part Name="Render" DisplayName="Smokey Breath" RenderString="]" Tile="items/sw_flaminghands.bmp" TileColor="&amp;R" DetailColor="W"></part>
+    <part Name="Commerce" Value="0"></part>
+    <part Name="Description" Short="Smoke billows from your nose and mouth when you exhale."></part>
+    <part Name="Physics" Weight="0" IsReal="false"></part>
+    <part Name="TemperatureOnHit" Amount="100" Max="false" OnWielderHit="true"></part>
+    <part Name="Cursed"></part>
+    <part Name="NoBreak"></part>
+    <intproperty Name="Natural" Value="1" />
+    <tag Name="NoSparkingQuest"></tag>
+    <xtagGrammar IsPlural="true" />
+  </object>
+  <object Name="Icy Breath" Inherits="Armor">
+    <part Name="NoDamage"></part>
+    <part Name="Armor" AV="0" DV="0" RF="0" WornOn="Face"></part>
+    <part Name="Render" DisplayName="Icy Breath" RenderString="]" Tile="items/sw_freezinghands.bmp" TileColor="&amp;C" DetailColor="Y"></part>
+    <part Name="Commerce" Value="0"></part>
+    <part Name="Description" Short="A cold vapor cloud forms when you exhale."></part>
+    <part Name="Physics" Weight="0" IsReal="false"></part>
+    <part Name="TemperatureOnHit" Amount="-3d20" Max="false" OnWielderHit="true"></part>
+    <part Name="Cursed"></part>
+    <part Name="NoBreak"></part>
+    <intproperty Name="Natural" Value="1" />
+    <tag Name="NoSparkingQuest"></tag>
+  </object>
+</objects>
