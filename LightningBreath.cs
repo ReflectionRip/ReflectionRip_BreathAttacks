@@ -63,7 +63,7 @@ namespace XRL.World.Parts.Mutation
         {
             if (myActivatedAbility == null) return;
             StringBuilder stringBuilder = Event.NewStringBuilder((string)null);
-            stringBuilder.Append("Discharge [").Append(nCharges).Append(" charges]");
+            stringBuilder.Append("Breathe Lightning [").Append(nCharges).Append(" charges]");
             myActivatedAbility.DisplayName = stringBuilder.ToString();
             if (nCharges == 0) myActivatedAbility.Enabled = false;
             else               myActivatedAbility.Enabled = true;
