@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mutations>
   <category Name="Physical">
-    <mutation Name="Fire Breath" Cost="4" MaxSelected="1" Class="rr_FireBreath" Exclusions="Ice Breath,Beak,Muzzle" Code="r1"></mutation>
-    <mutation Name="Ice Breath" Cost="4" MaxSelected="1" Class="rr_IceBreath" Exclusions="Fire Breath,Beak,Muzzle" Code="r2"></mutation>
+    <mutation Name="Fire Breath" Cost="4" MaxSelected="1" Class="rr_FireBreath" Exclusions="Ice Breath,Lightning Breath,Beak,Muzzle" Code="r1"></mutation>
+    <mutation Name="Ice Breath" Cost="4" MaxSelected="1" Class="rr_IceBreath" Exclusions="Fire Breath,Lightning Breath,Beak,Muzzle" Code="r2"></mutation>
+    <mutation Name="Lightning Breath" Cost="4" MaxSelected="1" Class="rr_LightningBreath" Exclusions="Ice Breath,Fire Breath,Beak,Muzzle" Code="r2"></mutation>
   </category>
   <category Name="PhysicalDefects" DisplayName="&amp;RPhysical Defects">
-    <mutation Name="Beak" Exclusions="Fire Breath,Ice Breath,Muzzle" Load="Merge"></mutation>
+    <mutation Name="Beak" Exclusions="Fire Breath,Ice Breath,Lightning Breath,Muzzle" Load="Merge"></mutation>
   </category>
 </mutations>
