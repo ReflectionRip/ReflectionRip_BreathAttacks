@@ -1,3 +1,6 @@
+# Cache files
+*.cache
+
 # Prerequisites
 *.d
 
@@ -50,3 +53,9 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+#Visual Studio Temporary Files
+.vs/
+*.user
+bin/
+obj/
