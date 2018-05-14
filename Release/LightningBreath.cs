@@ -28,6 +28,7 @@ namespace XRL.World.Parts.Mutation
         public ActivatedAbilityEntry myActivatedAbility = null;
         public int VarCooldown = 25;
         public GameObject mySource;
+        private string[] pC = { "&W", "&Y", "&y" };
 
         public rr_LightningBreath()
         {
@@ -69,16 +70,15 @@ namespace XRL.World.Parts.Mutation
             else               myActivatedAbility.Enabled = true;
         }
 
-        public void Discharge(Cell C, int Voltage)
+        public void Spawn(Cell C)
         {
-            Event eDischarge = Event.New(nameof(Discharge));
+            Event eDischarge = Event.New("Discharge");
             eDischarge.AddParameter("Owner", ParentObject);
             eDischarge.AddParameter("TargetCell", C);
-            eDischarge.AddParameter(nameof(Voltage), Voltage);
+            eDischarge.AddParameter("Voltage", nCharges);
             eDischarge.AddParameter("Damage", nCharges.ToString() + "d4");
             ParentObject.FireEvent(eDischarge);
         }
-
 
         public void Breathe(Cell C, ScreenBuffer Buffer)
         {
@@ -90,13 +90,13 @@ namespace XRL.World.Parts.Mutation
                 {
                     if(GO.PhasedMatches(ParentObject))
                     {
-                        for (int x = 0; x < 5; x++) GO.ParticleText("&W" + (char)(219 + Stat.Random(0, 4)), 2.9f, 1);
-                        for (int x = 0; x < 5; x++) GO.ParticleText("&Y" + (char)(219 + Stat.Random(0, 4)), 2.9f, 1);
-                        for (int x = 0; x < 5; x++) GO.ParticleText("&y" + (char)(219 + Stat.Random(0, 4)), 2.9f, 1);
+                        for (int x = 0; x < 5; x++) GO.ParticleText(pC[0] + (char)(219 + Stat.Random(0, 4)), 2.9f, 1);
+                        for (int x = 0; x < 5; x++) GO.ParticleText(pC[1] + (char)(219 + Stat.Random(0, 4)), 2.9f, 1);
+                        for (int x = 0; x < 5; x++) GO.ParticleText(pC[2] + (char)(219 + Stat.Random(0, 4)), 2.9f, 1);
                     }
                 }
 
-                Discharge(C, nCharges);
+                Spawn(C);
             }
 
             Buffer.Goto(C.X, C.Y);
@@ -211,7 +211,7 @@ namespace XRL.World.Parts.Mutation
             {
                 if (nCharges == 0) return false;
 
-                return rr_LightningBreath.Cast(this, "5-6");
+                return Cast(this, "5-6");
             }
 
             if(E.ID == "BeginEquip")

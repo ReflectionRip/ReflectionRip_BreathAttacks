@@ -5,10 +5,10 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("BreathAttacks")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Breath Attacks by Reflection Rip")]
+[assembly: AssemblyDescription("Provides new Dragon Breath mutations for Caves of Qud")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Reflection Rip")]
 [assembly: AssemblyProduct("BreathAttacks")]
 [assembly: AssemblyCopyright("Copyright ©  2018")]
 [assembly: AssemblyTrademark("")]

@@ -15,7 +15,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>bin\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -32,6 +32,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Release\AcidBreath.cs" />
     <Compile Include="Release\FireBreath.cs" />
     <Compile Include="Release\LightningBreath.cs" />
     <Compile Include="Release\IceBreath.cs" />
@@ -39,7 +40,13 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Release\Mutations.xml" />
-    <Content Include="Release\ObjectBlueprints.xml" />
+    <Content Include="Release\ObjectBlueprints.xml">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="Release\preview.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Release\workshop.json" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
