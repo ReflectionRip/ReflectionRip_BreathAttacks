@@ -1,19 +1,13 @@
 ﻿// Decompiled with JetBrains decompiler
 // Type: XRL.World.Parts.Mutation.LightningBreath
-// Assembly: Assembly-CSharp, Version=2.0.6684.37340, Culture=neutral, PublicKeyToken=null
-// MVID: 5B4FB8C1-2DD4-47AE-B531-7F4329DC0775
-// Assembly location: C:\Program Files (x86)\Steam\steamapps\common\Caves of Qud\CoQ_Data\Managed\Assembly-CSharp.dll
 // This code tries to add a Lightning Breathing Dragon type attack.
 
 using ConsoleLib.Console;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using XRL.Core;
 using XRL.Rules;
-using XRL.World.Parts;
 using XRL.UI;
-using XRL.Messages;
 using XRL.World.AI.GoalHandlers;
 
 namespace XRL.World.Parts.Mutation
@@ -21,154 +15,143 @@ namespace XRL.World.Parts.Mutation
     [Serializable]
     public class rr_LightningBreath : BaseMutation
     {
+        public Guid myActivatedAbilityID = Guid.Empty;
+        public ActivatedAbilityEntry myActivatedAbility = null;
+        public GameObject mySource;
+
+        public int VarCooldown = 25;
+        public string DamageDie = "d4";
+
         public int nCharges = 3;
         public int nTurnCounter;
         public int OldConductivity;
-        public Guid myActivatedAbilityID = Guid.Empty;
-        public ActivatedAbilityEntry myActivatedAbility = null;
-        public int VarCooldown = 25;
-        public GameObject mySource;
-        private string[] pC = { "&W", "&Y", "&y" };
+
+        // My attempt of preparing for multi-language support.
+        // Wanted to use a resource file, but couldn't get it to work correctly.
+        // Also wanted to seperate the strings from the source code, to allow for better reuse.
+        private class Resources
+        {
+            private static char[] Colors = { 'C', 'W', 'Y' }; // Brright Cyan, Yellow, White
+            // 7 of the single line characters; not including the 4 corner characters.
+            private static char[] Particles = { '\u00B3', '\u00C4', '\u00C5', '\u00B4', '\u00C1', '\u00C2', '\u00C3' }; 
+            internal static string displayName { get {
+                    return "Lightning Breath"; } }
+            internal static string commandName { get {
+                    return "Breathe Lightning [{0} charges]"; } }
+            internal static string faceItem { get {
+                    return "Sparking Breath"; } }
+            internal static string description { get {
+                    return "You can breathe lightning."; } }
+            internal static string targetSelf { get {
+                    return "Are you sure you want to target yourself?"; } }
+            internal static string equipError { get {
+                    return "Your lightning breath prevents you from equipping {0}!"; } }
+            internal static string levelText { get {
+                    return "Emits a 9-square ray of lightning in the direction of your choice.\n" +
+                           "Accrue an additional charge every {0} rounds up to the maximum of {1} charges.\n" +
+                           "Damage per charge: {2}\n" +
+                           "Electricity will arc to adjacent targets dealing reduced damage.\n" +
+                           "You can't wear anything on your face."; } }
+            internal static string damageMessage { get {
+                    return "from %o lightning!"; } }
+            internal static char Color { get {
+                    Stat.Random(1, 3);
+                    return Colors[Stat.Random(0, Colors.Length - 1)]; } }
+            internal static char Particle { get {
+                    Stat.Random(1, 3);
+                    return Particles[Stat.Random(0, Particles.Length - 1)]; } }
+        }
 
         public rr_LightningBreath()
         {
             Name = nameof(rr_LightningBreath);
-            DisplayName = "Lightning Breath";
+            DisplayName = Resources.displayName;
         }
 
         public override void Register(GameObject Object)
         {
             Object.RegisterPartEvent(this, "BeginEquip");
             Object.RegisterPartEvent(this, "EndTurn");
-            Object.RegisterPartEvent(this, "rr_CommandLightningBreath");
+            Object.RegisterPartEvent(this, "rr_CommandBreath");
             Object.RegisterPartEvent(this, "AIGetOffensiveMutationList");
         }
 
         public override string GetDescription()
         {
-            return "You can breathe lightning.";
+            return Resources.description;
         }
 
         public override string GetLevelText(int Level)
         {
-            return "Emits a 9-square ray of lightning in the direction of your choice.\n" +
-                   "Accrue an additional charge every " + Math.Ceiling((Decimal)(VarCooldown / (2+Level))) +
-                   " rounds up to the maximum of " + (2+Level) + " charges.\n" +
-                   "Damage per charge: 1d4.\n" +
-                   "Electricity will arc to adjacent targets dealing reduced damage.\n" +
-                   "You can't wear anything on your face.";
+            return String.Format(Resources.levelText, Math.Ceiling((Decimal)(VarCooldown / (2 + Level))), (2 + Level), '1' + DamageDie);
         }
 
         // Update the ability string to show the number of charges to be used.
         public void UpdateAbility()
         {
             if (myActivatedAbility == null) return;
-            StringBuilder stringBuilder = Event.NewStringBuilder((string)null);
-            stringBuilder.Append("Breathe Lightning [").Append(nCharges).Append(" charges]");
-            myActivatedAbility.DisplayName = stringBuilder.ToString();
+            myActivatedAbility.DisplayName = string.Format(Resources.commandName,nCharges);
             if (nCharges == 0) myActivatedAbility.Enabled = false;
             else               myActivatedAbility.Enabled = true;
         }
 
-        public void Spawn(Cell C)
+        public void Spawn(Cell C, ScreenBuffer Buffer, int Distance = 0)
         {
+            if (C == null) return;
+
+            // Apply discarge to the cell, all objects that can take electricity damage will.
             Event eDischarge = Event.New("Discharge");
             eDischarge.AddParameter("Owner", ParentObject);
             eDischarge.AddParameter("TargetCell", C);
             eDischarge.AddParameter("Voltage", nCharges);
-            eDischarge.AddParameter("Damage", nCharges.ToString() + "d4");
+            eDischarge.AddParameter("Damage", nCharges.ToString() + DamageDie);
             ParentObject.FireEvent(eDischarge);
-        }
 
-        public void Breathe(Cell C, ScreenBuffer Buffer)
-        {
-            string Damage = nCharges + "d4";
-
-            if(C != null)
+            // Add particle effects, but only in visible active zones.
+            if (C.ParentZone.IsActive() && C.IsVisible())
             {
-                foreach(GameObject GO in C.GetObjectsInCell())
+                for (int Fade = 0; Fade < 3; ++Fade)
                 {
-                    if(GO.PhasedMatches(ParentObject))
-                    {
-                        for (int x = 0; x < 5; x++) GO.ParticleText(pC[0] + (char)(219 + Stat.Random(0, 4)), 2.9f, 1);
-                        for (int x = 0; x < 5; x++) GO.ParticleText(pC[1] + (char)(219 + Stat.Random(0, 4)), 2.9f, 1);
-                        for (int x = 0; x < 5; x++) GO.ParticleText(pC[2] + (char)(219 + Stat.Random(0, 4)), 2.9f, 1);
-                    }
+                    // Pick a Forground color, and particle.
+                    string str1 = "&" + Resources.Color + Resources.Particle;
+
+                    XRLCore.ParticleManager.Add(str1, C.X, C.Y, 0.0f, 0.0f, 10 + 2 * Distance + (6 - 2 * Fade));
                 }
-
-                Spawn(C);
             }
-
-            Buffer.Goto(C.X, C.Y);
-            string sColor = "&C";
-
-            int r = Stat.Random(1, 3);
-            if(r == 1) sColor = "&W";
-            if(r == 2) sColor = "&Y";
-            if(r == 3) sColor = "&y";
-
-            r = Stat.Random(1, 3);
-            if(r == 1) sColor += "^W";
-            if(r == 2) sColor += "^Y";
-            if(r == 3) sColor += "^y";
-
-            if(C.ParentZone != XRLCore.Core.Game.ZoneManager.ActiveZone) return;
-
-            r = Stat.Random(1, 3);
-            Buffer.Write(sColor + (char)(219 + Stat.Random(0, 4)));
-            Popup._TextConsole.DrawBuffer(Buffer);
-            System.Threading.Thread.Sleep(10);
         }
 
-        public static bool Cast(rr_LightningBreath mutation = null, string level = "5-6")
+        public bool Breathe()
         {
-            // Make a random mutation if one doesn't exist on the source.
-            if(mutation == null)
-            {
-                mutation = new rr_LightningBreath();
-                mutation.Level = Stat.Roll(level);
-                mutation.ParentObject = XRLCore.Core.Game.Player.Body;
-            }
-
             // Pick the target.
             ScreenBuffer Buffer = new ScreenBuffer(80, 25);
             XRLCore.Core.RenderMapToBuffer(Buffer);
-            List<Cell> TargetCell = mutation.PickLine(9, AllowVis.Any, (Func<GameObject, bool>) null);
-            if(TargetCell != null || TargetCell.Count > 0)
-            {
-                if(TargetCell.Count == 1 && mutation.ParentObject.IsPlayer())
-                {
-                    if(Popup.ShowYesNoCancel("Are you sure you want to target yourself?") != DialogResult.Yes)
-                    {
-                        return true;
-                    }
-                }
-            }
+            List<Cell> TargetCells = PickLine(9, AllowVis.Any, (Func<GameObject, bool>) null);
+            if (TargetCells == null || TargetCells.Count <= 1) return false;
 
-            // Apply 1 turn of energy usage to the player.
-            mutation.ParentObject.FireEvent(Event.New("UseEnergy", "Amount", 1000, "Type", "Physical Mutation"));
-
-            // Shoot out the line of lightning.
-            for (int index = 0; index < 9 && index < TargetCell.Count; ++index)
+            // Shoot out the breath line.
+            for (int Distance = 0; Distance < 9 && Distance < TargetCells.Count; ++Distance)
             {
-                if(TargetCell.Count == 1 || TargetCell[index] != mutation.ParentObject.pPhysics.CurrentCell)
+                if(TargetCells.Count == 1 || TargetCells[Distance] != ParentObject.pPhysics.CurrentCell)
                 {
-                    mutation.Breathe(TargetCell[index], Buffer);
+                    Spawn(TargetCells[Distance], Buffer, Distance);
                 }
-                foreach(GameObject gameObject in TargetCell[index].GetObjectsWithPart("Physics"))
+                foreach(GameObject gameObject in TargetCells[Distance].GetObjectsWithPart("Physics"))
                 {
                     // Stop if a solid object or a missle blocker is hit.
                     if(gameObject.pPhysics.Solid && gameObject.GetIntProperty("AllowMissiles", 0) == 0)
                     {
-                        index = 999;
+                        Distance = 999;
                         break;
                     }
                 }
             }
 
+            // Apply 1 turn of energy usage to the player.
+            ParentObject.FireEvent(Event.New("UseEnergy", "Amount", 1000, "Type", "Physical Mutation"));
+
             // Clear the number of charges.
-            mutation.nCharges = 0;
-            mutation.UpdateAbility();
+            nCharges = 0;
+            UpdateAbility();
 
             return true;
         }
@@ -202,16 +185,16 @@ namespace XRL.World.Parts.Mutation
                 // Get the Distance and Line of Sight to the Target and use the ability if able.
                 if(Distance <= 9 && ParentObject.HasLOSTo(Target))
                 {
-                    CommandList.Add(new AICommandList("rr_CommandLightningBreath", 1));
+                    CommandList.Add(new AICommandList("rr_CommandBreath", 1));
                 }
                 return true;
             }
 
-            if(E.ID == "rr_CommandLightningBreath")
+            if(E.ID == "rr_CommandBreath")
             {
                 if (nCharges == 0) return false;
 
-                return Cast(this, "5-6");
+                return Breathe();
             }
 
             if(E.ID == "BeginEquip")
@@ -223,7 +206,7 @@ namespace XRL.World.Parts.Mutation
                 {
                     if(IsPlayer())
                     {
-                        Popup.Show("Your lightning breath prevents you from equipping " + Equipment.DisplayName + "!");
+                        Popup.Show(String.Format(Resources.equipError, Equipment.DisplayName));
                     }
                     return false;
                 }
@@ -233,6 +216,7 @@ namespace XRL.World.Parts.Mutation
 
         public override bool ChangeLevel(int NewLevel)
         {
+            // Refill the charges on level up.  Isn't that nice of us?
             nCharges = 2 + Level;
             UpdateAbility();
 
@@ -243,20 +227,20 @@ namespace XRL.World.Parts.Mutation
         {
             Unmutate(GO);
 
-            // Disable conductivity to the Creature/Player.
+            // Disable conductivity of the Creature/Player.
             Physics pPhysics = GO.GetPart("Physics") as Physics;
-            if(pPhysics != null)
+            if (pPhysics != null)
             {
                 OldConductivity = pPhysics.Conductivity;
                 pPhysics.Conductivity = 0;
             }
 
-            // Add sparking breath to the Face of the Creature/Player.
+            // Add the breath to the face of the Creature/Player.
             Body pBody = GO.GetPart("Body") as Body;
             if(pBody != null)
             {
                 GO.FireEvent(Event.New("CommandForceUnequipObject", "BodyPartName", "Face"));
-                mySource = GameObjectFactory.Factory.CreateObject("Sparking Breath");
+                mySource = GameObjectFactory.Factory.CreateObject(Resources.faceItem);
                 Event eCommandEquipObject = Event.New("CommandEquipObject");
                 eCommandEquipObject.AddParameter("Object", mySource);
                 eCommandEquipObject.AddParameter("BodyPartName", "Face");
@@ -265,8 +249,9 @@ namespace XRL.World.Parts.Mutation
 
             // Add the ability.
             ActivatedAbilities AA = GO.GetPart("ActivatedAbilities") as ActivatedAbilities;
-            myActivatedAbilityID = AA.AddAbility("Breathe Lightning", "rr_CommandLightningBreath", "Physical Mutation");
+            myActivatedAbilityID = AA.AddAbility("Breathe Lightning", "rr_CommandBreath", "Physical Mutation");
             myActivatedAbility = AA.AbilityByGuid[myActivatedAbilityID];
+
             return true;
         }
 
@@ -280,13 +265,12 @@ namespace XRL.World.Parts.Mutation
                 OldConductivity = 0;
             }
 
-            // Remove sparking breath from the Face of the Creature/Player.
+            // Remove the breath from the Face of the Creature/Player.
             Body pBody = GO.GetPart("Body") as Body;
             if(pBody != null)
             {
                 BodyPart pFace = pBody.GetPartByName("Face");
-                if(pFace != null && pFace.Equipped != null &&
-                pFace.Equipped.Blueprint == "Sparking Breath")
+                if(pFace != null && pFace.Equipped != null && pFace.Equipped.Blueprint == Resources.faceItem)
                 {
                     pFace.Equipped.FireEvent(Event.New("Unequipped", "UnequippingObject", ParentObject, "BodyPart", pFace));
                     pFace.Unequip();

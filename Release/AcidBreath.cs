@@ -1,8 +1,5 @@
 // Decompiled with JetBrains decompiler
 // Type: XRL.World.Parts.Mutation.FireBreath
-// Assembly: Assembly-CSharp, Version=2.0.6684.37340, Culture=neutral, PublicKeyToken=null
-// MVID: 5B4FB8C1-2DD4-47AE-B531-7F4329DC0775
-// Assembly location: C:\Program Files (x86)\Steam\steamapps\common\Caves of Qud\CoQ_Data\Managed\Assembly-CSharp.dll
 // This code tries to add a Fire Breathing Dragon type attack.  It uses flaming hands as its original code source.
 
 using ConsoleLib.Console;
@@ -20,24 +17,24 @@ namespace XRL.World.Parts.Mutation
     {
         public Guid myActivatedAbilityID = Guid.Empty;
         public ActivatedAbilityEntry myActivatedAbility = null;
-        public string Gas = "AcidGas";
+        public GameObject mySource;
+
+        public int VarCooldown = 25;
         public string DamageDie = "d4+1";
+
+        public string Gas = "AcidGas";
         public int BaseDensity = 30;
         public int LevelDensity = 10;
-        public int VarCooldown = 25;
-        public GameObject mySource;
         private string DamageTypeImmunity;
-
-        [NonSerialized]
-        private string[] PrimaryColors = { "G", "g" };
-        [NonSerialized]
-        private string[] Particles = { "ø", "ù", "ú" };
 
         // My attempt of preparing for multi-language support.
         // Wanted to use a resource file, but couldn't get it to work correctly.
         // Also wanted to seperate the strings from the source code, to allow for better reuse.
         private class Resources
         {
+            private static char[] Colors = { 'g', 'G' }; // Dark Green, Light Green
+            // The 5 square symbols; Full square, and 4 1/2 squares.
+            private static char[] Particles = { '\u00DB', '\u00DC', '\u00DD', '\u00DE', '\u00DF' };
             internal static string displayName { get {
                     return "Acid Breath"; } }
             internal static string commandName { get {
@@ -57,8 +54,13 @@ namespace XRL.World.Parts.Mutation
                            "Density: {2}\n" +
                            "You can't wear anything on your face."; } }
             internal static string damageMessage { get {
-                    return "from a jet of corrosive gas!"; }
-            }
+                    return "from a jet of corrosive gas!"; } }
+            internal static char Color { get {
+                    Stat.Random(1, 3);
+                    return Colors[Stat.Random(0, Colors.Length - 1)]; } }
+            internal static char Particle { get {
+                    Stat.Random(1, 3);
+                    return Particles[Stat.Random(0, Particles.Length - 1)]; } }
         }
 
         public rr_AcidBreath()
@@ -86,66 +88,79 @@ namespace XRL.World.Parts.Mutation
         }
 
         // Create a gas cloud on a cell.
-        public void Spawn(Cell C)
+        public void Spawn(Cell C, ScreenBuffer Buffer, int Distance = 0)
         {
             if (C == null) return;
+
+            // Apply acid damage to all 'Combat' objects in the cell.
+            // Should I change this to all objects?
             foreach (GameObject GO in C.GetObjectsWithPart("Combat"))
             {
-                Damage damage = new Damage(Stat.Roll(Level + DamageDie));
-                damage.AddAttribute("Acid");
-                Event E = Event.New("TakeDamage");
-                E.AddParameter("Damage", damage);
-                E.AddParameter("Owner", ParentObject);
-                E.AddParameter("Attacker", ParentObject);
-                E.AddParameter("Message", Resources.damageMessage);
-                GO.FireEvent(E);
+                if (GO.PhasedMatches(ParentObject))
+                {
+                    Damage damage = new Damage(Stat.Roll(Level + DamageDie));
+                    damage.AddAttribute("Acid");
+
+                    Event eTakeDamage = Event.New("TakeDamage");
+                    eTakeDamage.AddParameter("Damage", damage);
+                    eTakeDamage.AddParameter("Owner", ParentObject);
+                    eTakeDamage.AddParameter("Attacker", ParentObject);
+                    eTakeDamage.AddParameter("Message", Resources.damageMessage);
+                    GO.FireEvent(eTakeDamage);
+                }
             }
+
+            // Create a gas cloud
             GameObject gasObject = GameObjectFactory.Factory.CreateObject(Gas);
             Gas spawnedGas = gasObject.GetPart("Gas") as Gas;
             spawnedGas.Creator = ParentObject;
             spawnedGas.Density = BaseDensity + (Level * LevelDensity);
             C.AddObject(gasObject);
+
+            // Add particle effects, but only in visible active zones.
+            if (C.ParentZone.IsActive() && C.IsVisible())
+            {
+                for (int Fade = 0; Fade < 3; ++Fade)
+                {
+                    // Pick a Forground color, background color, and particle.
+                    string str1 = "&" + Resources.Color + "^" + Resources.Color + Resources.Particle;
+
+                    XRLCore.ParticleManager.Add(str1, C.X, C.Y, 0.0f, 0.0f, 10 + 2 * Distance + (6 - 2 * Fade));
+                }
+            }
         }
 
         public bool Breathe()
         {
+            // Pick the target.
             ScreenBuffer Buffer = new ScreenBuffer(80, 25);
             XRLCore.Core.RenderMapToBuffer(Buffer);
             List<Cell> TargetCells = PickLine(9, AllowVis.Any, null);
             if (TargetCells == null || TargetCells.Count <= 1) return false;
 
-            if (myActivatedAbility != null) myActivatedAbility.Cooldown = (VarCooldown + 1) * 10;
-
-            ParentObject.FireEvent(Event.New("UseEnergy", "Amount", 1000, "Type", "Physical Mutation"));
-
-            foreach (Cell TargetCell in TargetCells)
+            // Shoot out the breath line.
+            for (int Distance = 0; Distance < 9 && Distance < TargetCells.Count; ++Distance)
             {
-                if (TargetCell == ParentObject.pPhysics.CurrentCell) continue;
-
-                Spawn(TargetCell);
-
-                if (TargetCell.ParentZone.IsActive() && TargetCell.IsVisible())
+                if (TargetCells.Count == 1 || TargetCells[Distance] != ParentObject.pPhysics.CurrentCell)
                 {
-                    for (int index2 = 0; index2 < 3; ++index2)
-                    {
-                        // Pick a Forground color, background color, and particle.
-                        int num1 = Stat.Random(0, PrimaryColors.Length - 1);
-                        int num2 = Stat.Random(0, PrimaryColors.Length - 1);
-                        int num3 = Stat.Random(0, Particles.Length - 1);
-                        string str1 = "&" + PrimaryColors[num1] + "^" + PrimaryColors[num2] + Particles[num3];
+                    Spawn(TargetCells[Distance], Buffer, Distance);
 
-                        ParticleManager particleManager = XRLCore.ParticleManager;
-                        particleManager.Add(str1, TargetCell.X, TargetCell.Y, 0.0f, 0.0f, 16 + 2 * index2);
-                    }
                 }
-                foreach (GameObject gameObject in TargetCell.GetObjectsWithPart("Physics"))
+                foreach (GameObject gameObject in TargetCells[Distance].GetObjectsWithPart("Physics"))
                 {
                     if (gameObject.pPhysics.Solid && gameObject.GetIntProperty("AllowMissiles", 0) == 0)
                     {
-                        return true;
+                        Distance = 999;
+                        break;
                     }
                 }
             }
+
+            // Apply 1 turn of energy usage to the player.
+            ParentObject.FireEvent(Event.New("UseEnergy", "Amount", 1000, "Type", "Physical Mutation"));
+
+            // Restart cooldown.
+            if (myActivatedAbility != null) myActivatedAbility.Cooldown = (VarCooldown + 1) * 10;
 
             return true;
         }
@@ -207,8 +222,11 @@ namespace XRL.World.Parts.Mutation
         {
             Unmutate(GO);
 
-            Physics pPhysics = GO.GetPart("Physics") as Physics;
+            // Add acid gas immunity.
+            GameObjectBlueprint gameObjectBlueprint = GameObjectFactory.Factory.GetBlueprint(Gas);
+            DamageTypeImmunity = gameObjectBlueprint.GetTag("GasGenerationDamageTypeImmunity", null);
 
+            // Add the breath to the face of the Creature/Player.
             Body pBody = GO.GetPart("Body") as Body;
             if(pBody != null)
             {
@@ -220,21 +238,20 @@ namespace XRL.World.Parts.Mutation
                 GO.FireEvent(eCommandEquipObject);
             }
 
-            ActivatedAbilities pAA = GO.GetPart("ActivatedAbilities") as ActivatedAbilities;
-
-            myActivatedAbilityID = pAA.AddAbility(Resources.commandName, "rr_CommandBreath", "Physical Mutation");
-            myActivatedAbility = pAA.AbilityByGuid[myActivatedAbilityID];
-
-            GameObjectBlueprint gameObjectBlueprint = GameObjectFactory.Factory.GetBlueprint(Gas);
-            DamageTypeImmunity = gameObjectBlueprint.GetTag("GasGenerationDamageTypeImmunity", null);
+            // Add the ability.
+            ActivatedAbilities AA = GO.GetPart("ActivatedAbilities") as ActivatedAbilities;
+            myActivatedAbilityID = AA.AddAbility(Resources.commandName, "rr_CommandBreath", "Physical Mutation");
+            myActivatedAbility = AA.AbilityByGuid[myActivatedAbilityID];
 
             return true;
         }
 
         public override bool Unmutate(GameObject GO)
         {
-            Physics pPhysics = GO.GetPart("Physics") as Physics;
+            // Remove acid immunity from the Creature/Player.
+            DamageTypeImmunity = null;
 
+            // Remove the breath from the Face of the Creature/Player.
             Body pBody = GO.GetPart("Body") as Body;
             if(pBody != null)
             {
@@ -246,14 +263,13 @@ namespace XRL.World.Parts.Mutation
                 }
             }
 
-            if(myActivatedAbilityID != Guid.Empty)
+            // Remove the ability.
+            if (myActivatedAbilityID != Guid.Empty)
             {
-                ActivatedAbilities pAA = GO.GetPart("ActivatedAbilities") as ActivatedAbilities;
-                pAA.RemoveAbility(myActivatedAbilityID);
+                ActivatedAbilities AA = GO.GetPart("ActivatedAbilities") as ActivatedAbilities;
+                AA.RemoveAbility(myActivatedAbilityID);
                 myActivatedAbilityID = Guid.Empty;
             }
-
-            DamageTypeImmunity = null;
 
             return true;
         }
