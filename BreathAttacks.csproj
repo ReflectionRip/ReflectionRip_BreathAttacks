@@ -33,6 +33,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Release\AcidBreath.cs" />
+    <Compile Include="Release\BaseBreath.cs" />
     <Compile Include="Release\FireBreath.cs" />
     <Compile Include="Release\LightningBreath.cs" />
     <Compile Include="Release\IceBreath.cs" />

@@ -249,7 +249,7 @@ namespace XRL.World.Parts.Mutation
 
             // Add the ability.
             ActivatedAbilities AA = GO.GetPart("ActivatedAbilities") as ActivatedAbilities;
-            myActivatedAbilityID = AA.AddAbility("Breathe Lightning", "rr_CommandBreath", "Physical Mutation");
+            myActivatedAbilityID = AA.AddAbility(Resources.commandName, "rr_CommandBreath", "Physical Mutation");
             myActivatedAbility = AA.AbilityByGuid[myActivatedAbilityID];
 
             return true;
