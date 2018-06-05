@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using XRL.Core;
+using XRL.Messages;
 using XRL.Rules;
 using XRL.UI;
 using XRL.World.AI.GoalHandlers;
@@ -15,62 +16,58 @@ namespace XRL.World.Parts.Mutation
         public ActivatedAbilityEntry myActivatedAbility = null;
         public GameObject mySource;
 
-        public int VarCooldown = 1;
-        public string DamageDie = "d2";
+        public int VarCooldown = 10;
+        public string DamageDie = "d2-1";
+        public string[] Attributes = { };
 
-        // My attempt of preparing for multi-language support.
-        // Wanted to use a resource file, but couldn't get it to work correctly.
-        // Also wanted to seperate the strings from the source code, to allow for better reuse.
-        private class Resources
-        {
-            // Yellow, Dark Green; Yuck!
-            private static char[] Colors = { 'W', 'g' };
-            // 1/2 Squares.
-            private static char[] Particles = { '\u00DC', '\u00DD', '\u00DE', '\u00DF' };
-            internal static string DisplayName { get { return "Bad Breath"; } }
-            internal static string CommandName { get { return "Breathe"; } }
-            internal static string FaceItem { get { return "Bad Breath"; } }
-            internal static string Description { get { return "Your breath stinks!"; } }
-            internal static string TargetSelf { get { return "Are you sure you want to target yourself?"; } }
-            internal static string EquipError { get { return "Your bad breath prevents you from equipping {1}!"; } }
-            internal static string LevelText { get {
-                    return "Emits a 9-square ray of bad breath in the direction of your choice\n" +
-                           "Cooldown: {1} rounds\n" +
-                           "Damage: {2}\n" +
-                           "You can't wear anything on your face."; } }
-            internal static string damageMessage { get { return "from %o breath effect!"; } }
-            internal static char Color { get {
-                    Stat.Random(1, 3);
-                    return Colors[Stat.Random(0, Colors.Length - 1)]; } }
-            internal static char Particle { get {
-                    Stat.Random(1, 3);
-                    return Particles[Stat.Random(0, Particles.Length - 1)]; } }
-        }
+        [NonSerialized]
+        protected char[] Colors = { 'W', 'g' };
+
+        [NonSerialized]
+        protected char[] Particles = { '\u00DC', '\u00DD', '\u00DE', '\u00DF' };
+
+        protected virtual string CommandName { get { return "Breathe"; } }
+        protected virtual string FaceItem { get { return "Bad Breath"; } }
+        protected virtual string Description { get { return "Your breath stinks!"; } }
+        protected virtual string TargetSelf { get { return "Are you sure you want to target yourself?"; } }
+        protected virtual string EquipError { get { return "Your bad breath prevents you from equipping {0}!"; } }
+        protected virtual string LevelText { get {
+                return "Emits a 9-square ray of bad breath in the direction of your choice\n" +
+                       "Cooldown: {0} rounds\n" +
+                       "Damage: {1}\n" +
+                       "You can't wear anything on your face."; } }
+        protected virtual string DamageMessage { get { return "from %o breath effect!"; } }
+        protected virtual char Color { get {
+                Stat.Random(1, 3);
+                return Colors[Stat.Random(0, Colors.Length - 1)]; } }
+        protected virtual char Particle { get {
+                Stat.Random(1, 3);
+                return Particles[Stat.Random(0, Particles.Length - 1)]; } }
 
         public rr_BaseBreath()
         {
             Name = nameof(rr_BaseBreath);
-            DisplayName = Resources.DisplayName;
+            DisplayName = "Bad Breath";
         }
 
-        public override void Register(GameObject Object)
+        public override void Register(GameObject GO)
         {
-            Object.RegisterPartEvent(this, "BeginEquip");
-            Object.RegisterPartEvent(this, "rr_CommandBreath");
-            Object.RegisterPartEvent(this, "AIGetOffensiveMutationList");
+            GO.RegisterPartEvent(this, "BeginEquip");
+            GO.RegisterPartEvent(this, "rr_CommandBreath");
+            GO.RegisterPartEvent(this, "AIGetOffensiveMutationList");
         }
 
         public override string GetDescription()
         {
-            return Resources.Description;
+            return Description;
         }
 
         public override string GetLevelText(int Level)
         {
-            return String.Format(Resources.LevelText, VarCooldown, Level + DamageDie);
+            return String.Format(LevelText, VarCooldown, Level + DamageDie);
         }
 
-        public void Spawn(Cell C, ScreenBuffer Buffer, int Distance = 0)
+        public virtual void Spawn(Cell C, ScreenBuffer Buffer, int Distance = 0)
         {
             if (C == null) return;
 
@@ -80,13 +77,15 @@ namespace XRL.World.Parts.Mutation
                 if (GO.PhasedMatches(ParentObject))
                 {
                     Damage damage = new Damage(Stat.Roll(Level + DamageDie));
+                    for (int i = 0; i < Attributes.Length - 1; i++) damage.AddAttribute(Attributes[i]);
 
                     Event eTakeDamage = Event.New("TakeDamage");
                     eTakeDamage.AddParameter("Damage", damage);
                     eTakeDamage.AddParameter("Owner", ParentObject);
                     eTakeDamage.AddParameter("Attacker", ParentObject);
-                    eTakeDamage.AddParameter("Message", Resources.damageMessage);
+                    eTakeDamage.AddParameter("Message", DamageMessage);
                     GO.FireEvent(eTakeDamage);
+                    MessageQueue.AddPlayerMessage("Parent Obhect is " + ParentObject.DisplayName);
                 }
             }
 
@@ -95,14 +94,14 @@ namespace XRL.World.Parts.Mutation
             {
                 for (int Fade = 0; Fade < 3; ++Fade)
                 {
-                    string str1 = "&" + Resources.Color + "^" + Resources.Color + Resources.Particle;
+                    string str1 = "&" + Color + "^" + Color + Particle;
 
                     XRLCore.ParticleManager.Add(str1, C.X, C.Y, 0.0f, 0.0f, 10 + 2 * Distance + (6 - 2 * Fade));
                 }
             }
         }
 
-        public bool Breathe()
+        public virtual bool Breathe()
         {
             // Pick the target.
             ScreenBuffer Buffer = new ScreenBuffer(80, 25);
@@ -142,7 +141,7 @@ namespace XRL.World.Parts.Mutation
             if (E.ID == "AIGetOffensiveMutationList")
             {
                 if (myActivatedAbility == null) return true;
-                if (myActivatedAbility.Cooldown > 0) return true;
+                if (myActivatedAbility.Enabled == false) return true;
 
                 int Distance = (int)E.GetParameter("Distance");
                 GameObject Target = E.GetParameter("Target") as GameObject;
@@ -169,17 +168,12 @@ namespace XRL.World.Parts.Mutation
                 {
                     if (IsPlayer())
                     {
-                        Popup.Show(String.Format(Resources.EquipError, Equipment.DisplayName));
+                        Popup.Show(String.Format(EquipError, Equipment.DisplayName));
                     }
                     return false;
                 }
             }
             return base.FireEvent(E);
-        }
-
-        public override bool ChangeLevel(int NewLevel)
-        {
-            return base.ChangeLevel(NewLevel);
         }
 
         public override bool Mutate(GameObject GO, int Level)
@@ -191,7 +185,7 @@ namespace XRL.World.Parts.Mutation
             if (pBody != null)
             {
                 GO.FireEvent(Event.New("CommandForceUnequipObject", "BodyPartName", "Face"));
-                mySource = GameObjectFactory.Factory.CreateObject(Resources.FaceItem);
+                mySource = GameObjectFactory.Factory.CreateObject(FaceItem);
                 Event eCommandEquipObject = Event.New("CommandEquipObject");
                 eCommandEquipObject.AddParameter("Object", mySource);
                 eCommandEquipObject.AddParameter("BodyPartName", "Face");
@@ -200,7 +194,7 @@ namespace XRL.World.Parts.Mutation
 
             // Add the ability.
             ActivatedAbilities AA = GO.GetPart("ActivatedAbilities") as ActivatedAbilities;
-            myActivatedAbilityID = AA.AddAbility(Resources.CommandName, "rr_CommandBreath", "Physical Mutation");
+            myActivatedAbilityID = AA.AddAbility(CommandName, "rr_CommandBreath", "Physical Mutation");
             myActivatedAbility = AA.AbilityByGuid[myActivatedAbilityID];
             return true;
         }
@@ -212,7 +206,7 @@ namespace XRL.World.Parts.Mutation
             if (pBody != null)
             {
                 BodyPart pMainBody = pBody.GetPartByName("Face");
-                if (pMainBody != null && pMainBody.Equipped != null && pMainBody.Equipped.Blueprint == Resources.FaceItem)
+                if (pMainBody != null && pMainBody.Equipped != null && pMainBody.Equipped.Blueprint == FaceItem)
                 {
                     pMainBody.Equipped.FireEvent(Event.New("Unequipped", "UnequippingObject", ParentObject, "BodyPart", pMainBody));
                     pMainBody.Unequip();

@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <objects>
+  <object Name="Bad Breath" Inherits="Armor">
+    <part Name="NoDamage"></part>
+    <part Name="Armor" AV="0" DV="0" RF="0" WornOn="Face"></part>
+    <part Name="Render" DisplayName="Bad Breath" RenderString="]" Tile="items/item_3-4.bmp" TileColor="&amp;R" DetailColor="W"></part>
+    <part Name="Commerce" Value="0"></part>
+    <part Name="Description" Short="Your breath stinks. Yuck!"></part>
+    <part Name="Physics" Weight="0" IsReal="false"></part>
+    <part Name="Cursed"></part>
+    <part Name="NoBreak"></part>
+    <intproperty Name="Natural" Value="1" />
+    <tag Name="NoSparkingQuest"></tag>
+    <xtagGrammar IsPlural="true" />
+  </object>
   <object Name="Smokey Breath" Inherits="Armor">
     <part Name="NoDamage"></part>
     <part Name="Armor" AV="0" DV="0" RF="0" WornOn="Face"></part>

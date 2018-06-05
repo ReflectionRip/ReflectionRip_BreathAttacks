@@ -4,7 +4,7 @@
     <mutation Name="Fire Breath" Cost="4" MaxSelected="1" Class="rr_FireBreath" Exclusions="Ice Breath,Lightning Breath,Acid Breath,Beak,Muzzle" Code="r1"></mutation>
     <mutation Name="Ice Breath" Cost="4" MaxSelected="1" Class="rr_IceBreath" Exclusions="Fire Breath,Lightning Breath,Acid Breath,Beak,Muzzle" Code="r2"></mutation>
     <mutation Name="Lightning Breath" Cost="4" MaxSelected="1" Class="rr_LightningBreath" Exclusions="Ice Breath,Fire Breath,Acid Breath,Beak,Muzzle" Code="r3"></mutation>
-    <mutation Name="Acid Breath" Cost="4" MaxSelected="1" Class="rr_AcidBreath" Exclusions="Ice Breath,Fire Breath,Lightning Breath,Beak,Muzzle" Code="r4"></mutation>
+    <mutation Name="Acid Breath" Cost="4" MaxSelected="1" Class="rr_NewAcidBreath" Exclusions="Ice Breath,Fire Breath,Lightning Breath,Beak,Muzzle" Code="r4"></mutation>
   </category>
   <category Name="PhysicalDefects" DisplayName="&amp;RPhysical Defects">
     <mutation Name="Beak" Exclusions="Fire Breath,Ice Breath,Lightning Breath,Acid Breath,Muzzle" Load="Merge"></mutation>
