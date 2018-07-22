@@ -104,7 +104,7 @@ namespace XRL.World.Parts.Mutation
         public virtual bool Breathe()
         {
             // Pick the target.
-            ScreenBuffer Buffer = new ScreenBuffer(80, 25);
+            ScreenBuffer Buffer = ScreenBuffer.GetScrapBuffer1(true);
             XRLCore.Core.RenderMapToBuffer(Buffer);
             List<Cell> TargetCells = PickLine(9, AllowVis.Any, null);
             if (TargetCells == null || TargetCells.Count <= 1) return false;
