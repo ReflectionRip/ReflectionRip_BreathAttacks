@@ -65,4 +65,16 @@
     <intproperty Name="Natural" Value="1" />
     <tag Name="NoSparkingQuest"></tag>
   </object>
+  <object Name="Powerful Breath" Inherits="Armor">
+    <part Name="NoDamage"></part>
+    <part Name="Armor" AV="0" DV="0" RF="0" WornOn="Face"></part>
+    <part Name="Render" DisplayName="Powerful Breath" RenderString="]" Tile="items/item_3-4.bmp" TileColor="&amp;Y" DetailColor="y"></part>
+    <part Name="Commerce" Value="0"></part>
+    <part Name="Description" Short="Your breath is very forceful."></part>
+    <part Name="Physics" Weight="0" IsReal="false"></part>
+    <part Name="Cursed"></part>
+    <part Name="NoBreak"></part>
+    <intproperty Name="Natural" Value="1" />
+    <tag Name="NoSparkingQuest"></tag>
+  </object>
 </objects>

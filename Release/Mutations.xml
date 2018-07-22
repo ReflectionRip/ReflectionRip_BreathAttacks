@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mutations>
   <category Name="Physical">
-    <mutation Name="Fire Breath" Cost="4" MaxSelected="1" Class="rr_FireBreath" Exclusions="Ice Breath,Lightning Breath,Acid Breath,Beak,Muzzle" Code="r1"></mutation>
-    <mutation Name="Ice Breath" Cost="4" MaxSelected="1" Class="rr_IceBreath" Exclusions="Fire Breath,Lightning Breath,Acid Breath,Beak,Muzzle" Code="r2"></mutation>
-    <mutation Name="Lightning Breath" Cost="4" MaxSelected="1" Class="rr_LightningBreath" Exclusions="Ice Breath,Fire Breath,Acid Breath,Beak,Muzzle" Code="r3"></mutation>
-    <mutation Name="Acid Breath" Cost="4" MaxSelected="1" Class="rr_NewAcidBreath" Exclusions="Ice Breath,Fire Breath,Lightning Breath,Beak,Muzzle" Code="r4"></mutation>
+    <mutation Name="Fire Breath" Cost="4" MaxSelected="1" Class="rr_FireBreath" Exclusions="Ice Breath,Lightning Breath,Acid Breath,Force Breath,Beak,Muzzle" Code="r1"></mutation>
+    <mutation Name="Ice Breath" Cost="4" MaxSelected="1" Class="rr_IceBreath" Exclusions="Fire Breath,Lightning Breath,Acid Breath,Force Breath,Beak,Muzzle" Code="r2"></mutation>
+    <mutation Name="Lightning Breath" Cost="4" MaxSelected="1" Class="rr_LightningBreath" Exclusions="Ice Breath,Fire Breath,Acid Breath,Beak,Force Breath,Muzzle" Code="r3"></mutation>
+    <mutation Name="Acid Breath" Cost="4" MaxSelected="1" Class="rr_NewAcidBreath" Exclusions="Ice Breath,Fire Breath,Lightning Breath,Force Breath,Beak,Muzzle" Code="r4"></mutation>
+    <mutation Name="Force Breath" Cost="1" MaxSelected="1" Class="rr_ForceBreath" Exclusions="Ice Breath,Fire Breath,Lightning Breath,Acid Breath,Beak,Muzzle" Code="r5"></mutation>
   </category>
   <category Name="PhysicalDefects" DisplayName="&amp;RPhysical Defects">
-    <mutation Name="Beak" Exclusions="Fire Breath,Ice Breath,Lightning Breath,Acid Breath,Muzzle" Load="Merge"></mutation>
+    <mutation Name="Beak" Exclusions="Fire Breath,Ice Breath,Lightning Breath,Acid Breath,Force Breath,Muzzle" Load="Merge"></mutation>
   </category>
 </mutations>

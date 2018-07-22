@@ -1,6 +1,6 @@
 // Decompiled with JetBrains decompiler
 // Type: XRL.World.Parts.Mutation.FireBreath
-// This code tries to add a Fire Breathing Dragon type attack.  It uses flaming hands as its original code source.
+// This code tries to add a Acid Breathing Dragon type attack.  It uses acid wall trap as its original code source.
 
 using ConsoleLib.Console;
 using System;
