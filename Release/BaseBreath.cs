@@ -85,7 +85,7 @@ namespace XRL.World.Parts.Mutation
                     eTakeDamage.AddParameter("Attacker", ParentObject);
                     eTakeDamage.AddParameter("Message", DamageMessage);
                     GO.FireEvent(eTakeDamage);
-                    MessageQueue.AddPlayerMessage("Parent Obhect is " + ParentObject.DisplayName);
+                    //MessageQueue.AddPlayerMessage("Parent Object is " + ParentObject.DisplayName);
                 }
             }
 
